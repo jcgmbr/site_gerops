@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEPO - Sistema de Ocorrências</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== Paleta GEPO (padrão do painel ISP) ===== */
+        :root {
+            --gepo-navy: #0f172a;      /* menu, cabeçalhos escuros */
+            --gepo-navy-2: #1e293b;    /* texto principal / tons escuros secundários */
+            --gepo-sky: #38bdf8;       /* destaque sobre fundo escuro */
+            --gepo-bg: #f8fafc;        /* fundo das páginas */
+            --gepo-surface-2: #f1f5f9; /* cabeçalho de tabelas */
+            --gepo-border: #e2e8f0;
+            --gepo-border-2: #cbd5e1;
+            --gepo-muted: #64748b;
+            --gepo-text-2: #475569;
+
+            --bs-primary: #2563eb;   --bs-primary-rgb: 37, 99, 235;
+            --bs-success: #16a34a;   --bs-success-rgb: 22, 163, 74;
+            --bs-warning: #d97706;   --bs-warning-rgb: 217, 119, 6;
+            --bs-danger:  #dc2626;   --bs-danger-rgb: 220, 38, 38;
+            --bs-info:    #0ea5e9;   --bs-info-rgb: 14, 165, 233;
+            --bs-secondary: #64748b; --bs-secondary-rgb: 100, 116, 139;
+            --bs-dark: #0f172a;      --bs-dark-rgb: 15, 23, 42;
+
+            --bs-body-color: #1e293b;
+            --bs-body-bg: #f8fafc;
+            --bs-border-color: #e2e8f0;
+            --bs-link-color: #2563eb;
+            --bs-link-hover-color: #1d4ed8;
+
+            --bs-success-bg-subtle: #dcfce7; --bs-success-border-subtle: #bbf7d0; --bs-success-text-emphasis: #166534;
+            --bs-warning-bg-subtle: #fef3c7; --bs-warning-border-subtle: #fde68a; --bs-warning-text-emphasis: #92400e;
+            --bs-danger-bg-subtle:  #fee2e2; --bs-danger-border-subtle:  #fecaca; --bs-danger-text-emphasis:  #991b1b;
+            --bs-info-bg-subtle:    #e0f2fe; --bs-info-border-subtle:    #bae6fd; --bs-info-text-emphasis:    #075985;
+        }
+
+        body { background-color: var(--gepo-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .text-muted { color: var(--gepo-muted) !important; }
+
+        /* Menu */
+        .navbar { background-color: var(--gepo-navy); }
+        .navbar .nav-link:hover, .navbar .nav-link:focus { color: var(--gepo-sky); }
+
+        /* Cartões */
+        .card { --bs-card-border-color: var(--gepo-border); --bs-card-border-radius: 8px; --bs-card-inner-border-radius: 7px; }
+        .card-module { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; border: 1px solid var(--gepo-border); border-radius: 8px; }
+        .card-module:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12); border-color: var(--bs-primary); }
+
+        /* Indicadores (KPI) do dashboard */
+        .kpi-card { background: #ffffff; border: 1px solid var(--gepo-border); border-left: 4px solid var(--bs-primary); border-radius: 8px; }
+        .kpi-title { font-size: 0.8rem; font-weight: bold; color: var(--gepo-muted); text-transform: uppercase; }
+        .kpi-value { font-size: 1.9rem; font-weight: bold; color: var(--gepo-navy); margin-top: 4px; }
+
+        /* Tabelas */
+        .table > thead:not(.table-dark) > tr > th {
+            background-color: var(--gepo-surface-2); color: var(--gepo-text-2);
+            border-bottom: 2px solid var(--gepo-border-2);
+            font-size: 0.8rem; text-transform: uppercase;
+        }
+        .table-dark { --bs-table-bg: #0f172a; --bs-table-border-color: #1e293b; --bs-table-striped-bg: #1e293b; --bs-table-hover-bg: #1e293b; }
+        .table-warning { --bs-table-bg: #fef3c7; --bs-table-border-color: #fde68a; --bs-table-hover-bg: #fde68a; --bs-table-color: #1e293b; }
+
+        /* Botões */
+        .btn-primary { --bs-btn-bg: #2563eb; --bs-btn-border-color: #2563eb; --bs-btn-hover-bg: #1d4ed8; --bs-btn-hover-border-color: #1d4ed8; --bs-btn-active-bg: #1e40af; --bs-btn-active-border-color: #1e40af; --bs-btn-disabled-bg: #2563eb; --bs-btn-disabled-border-color: #2563eb; }
+        .btn-success { --bs-btn-bg: #16a34a; --bs-btn-border-color: #16a34a; --bs-btn-hover-bg: #15803d; --bs-btn-hover-border-color: #15803d; --bs-btn-active-bg: #166534; --bs-btn-active-border-color: #166534; --bs-btn-disabled-bg: #16a34a; --bs-btn-disabled-border-color: #16a34a; }
+        .btn-danger  { --bs-btn-bg: #dc2626; --bs-btn-border-color: #dc2626; --bs-btn-hover-bg: #b91c1c; --bs-btn-hover-border-color: #b91c1c; --bs-btn-active-bg: #991b1b; --bs-btn-active-border-color: #991b1b; --bs-btn-disabled-bg: #dc2626; --bs-btn-disabled-border-color: #dc2626; }
+        .btn-secondary { --bs-btn-bg: #64748b; --bs-btn-border-color: #64748b; --bs-btn-hover-bg: #475569; --bs-btn-hover-border-color: #475569; --bs-btn-active-bg: #334155; --bs-btn-active-border-color: #334155; --bs-btn-disabled-bg: #64748b; --bs-btn-disabled-border-color: #64748b; }
+        .btn-outline-primary { --bs-btn-color: #2563eb; --bs-btn-border-color: #2563eb; --bs-btn-hover-bg: #2563eb; --bs-btn-hover-border-color: #2563eb; --bs-btn-active-bg: #1d4ed8; --bs-btn-active-border-color: #1d4ed8; }
+        .btn-outline-warning { --bs-btn-color: #d97706; --bs-btn-border-color: #d97706; --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #d97706; --bs-btn-hover-border-color: #d97706; --bs-btn-active-color: #fff; --bs-btn-active-bg: #b45309; --bs-btn-active-border-color: #b45309; }
+        .btn-outline-danger  { --bs-btn-color: #dc2626; --bs-btn-border-color: #dc2626; --bs-btn-hover-bg: #dc2626; --bs-btn-hover-border-color: #dc2626; --bs-btn-active-bg: #b91c1c; --bs-btn-active-border-color: #b91c1c; }
+
+        /* Formulários e abas */
+        .form-control:focus, .form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25); }
+        .nav-tabs .nav-link { color: var(--gepo-muted); }
+        .nav-tabs .nav-link.active { color: #2563eb; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- Menu Global de Navegação -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+                <i class="bi bi-shield-lock-fill me-2"></i>GEPO - Sistema de Ocorrências
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}"><i class="bi bi-house-door me-1"></i>Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('modulo_ocorrencias') }}"><i class="bi bi-list-task me-1"></i>Ocorrências</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('modulo_banco') }}"><i class="bi bi-database me-1"></i>Base de Dados</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('modulo_dashboard') }}"><i class="bi bi-bar-chart-line me-1"></i>Estatísticas & Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('modulo_empresas') }}"><i class="bi bi-building me-1"></i>Empresas Envolvidas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('modulo_isp') }}"><i class="bi bi-shield-check me-1"></i>Indicadores ISP</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo das Páginas -->
+    <div class="container-fluid px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'message' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JS do Bootstrap 5 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

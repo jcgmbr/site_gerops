@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .oc-cabecalho { border-bottom: 2px solid var(--gepo-border-2); padding-bottom: 12px; }
+    .oc-titulo { color: var(--gepo-navy); }
+    .oc-celula { color: #334155; font-weight: 600; }
+    .oc-badge {
+        display: inline-block; background-color: var(--gepo-navy-2); border: 1px solid #334155;
+        color: var(--gepo-sky); padding: 4px 12px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: bold;
+    }
+</style>
+{% set ids_inconsistentes = inconsistencias | map(attribute='id') | list %}
+
+{% if inconsistencias %}
+<div class="alert alert-warning border-warning mb-4" role="alert">
+    <div class="fw-bold mb-1">
+        &#9888; {{ inconsistencias | length }} registro(s) com ano da data diferente do ano do Nº BO
+    </div>
+    <p class="small mb-2">
+        Estes registros podem ter sido lidos ou digitados incorretamente e distorcem as estatísticas do dashboard.
+        Confira o BO original e corrija a data, se necessário.
+    </p>
+    <ul class="small mb-0">
+        {% for i in inconsistencias %}
+        <li>
+            <strong>{{ i.porto or '-' }}</strong> &ndash; BO <code>{{ i.numero_bo }}</code>
+            &ndash; data registrada:
+            <code>{{ i.data_ocorrencia.strftime('%d/%m/%Y') if i.data_ocorrencia.strftime else i.data_ocorrencia }}</code>
+            &ndash; {{ i.titulo_ocorrencia or '-' }}
+            <a href="{{ url_for('editar', id=i.id) }}" class="alert-link ms-1">Corrigir</a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 oc-cabecalho">
+            <div>
+                <h4 class="card-title fw-bold m-0 oc-titulo">Gestão de Ocorrências</h4>
+                <p class="text-muted small m-0">Consulte, edite ou remova registros de ocorrências cadastradas.</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <!-- Formulário com filtros encadeados: Porto e Classificação -->
+                <form method="GET" action="{{ url_for('modulo_ocorrencias') }}" id="filtroForm" class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Seletor 1: Porto -->
+                    <label for="portoSelect" class="form-label fw-bold mb-0 text-nowrap">Porto:</label>
+                    <select name="porto" id="portoSelect" class="form-select form-select-sm fw-bold border-primary w-auto" onchange="resetarClassificacaoESubmeter()">
+                        <option value="TODOS" {% if porto_atual == 'TODOS' %}selected{% endif %}>TODOS</option>
+                        {% for p in portos %}
+                            <option value="{{ p }}" {% if porto_atual == p %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Seletor 2: Classificação da Ocorrência -->
+                    <label for="classificacaoSelect" class="form-label fw-bold mb-0 text-nowrap ms-2">Classificação:</label>
+                    <select name="classificacao" id="classificacaoSelect" class="form-select form-select-sm fw-bold border-primary w-auto" onchange="this.form.submit()">
+                        <option value="TODAS" {% if classificacao_atual == 'TODAS' %}selected{% endif %}>TODAS</option>
+                        {% for c in classificacoes %}
+                            <option value="{{ c }}" {% if classificacao_atual == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <a href="{{ url_for('criar') }}" class="btn btn-primary btn-sm fw-semibold text-nowrap">
+                    + Nova Ocorrência
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-center">Porto</th>
+                        <th scope="col" class="text-center">Nº BO</th>
+                        <th scope="col" class="text-center">Data</th>
+                        <th scope="col" class="text-center">Título</th>
+                        <th scope="col" class="text-center">Local</th>
+                        <th scope="col" class="text-center">Classificação</th>
+                        <th scope="col" class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registros %}
+                    <tr {% if reg.id in ids_inconsistentes %}class="table-warning"{% endif %}>
+                        <td class="text-center"><span class="oc-celula">{{ reg.porto or '-' }}</span></td>
+                        <td class="text-center"><span class="oc-celula">{{ reg.numero_bo or '-' }}</span></td>
+                        <td class="text-center"><span class="oc-celula">{{ reg.data_ocorrencia.strftime('%d/%m/%Y') if reg.data_ocorrencia and reg.data_ocorrencia.strftime else (reg.data_ocorrencia or '-') }}</span></td>
+                        <td><span class="oc-celula">{{ reg.titulo_ocorrencia or '-' }}</span></td>
+                        <td><span class="oc-celula">{{ reg.local_ocorrencia or '-' }}</span></td>
+                        <td class="text-center">
+                            {% if reg.classificacao_ocorrencia %}
+                                <span class="oc-badge">{{ reg.classificacao_ocorrencia }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('editar', id=reg.id) }}" class="btn btn-outline-warning">
+                                    Editar
+                                </a>
+                                <form action="{{ url_for('excluir', id=reg.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir este registro?');">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        Excluir
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <em>Nenhum registro encontrado para os filtros selecionados.</em>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function resetarClassificacaoESubmeter() {
+        document.getElementById('classificacaoSelect').value = 'TODAS';
+        document.getElementById('filtroForm').submit();
+    }
+</script>
+{% endblock %}

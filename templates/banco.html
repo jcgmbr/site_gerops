@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3 class="fw-bold mb-4"><i class="bi bi-database me-2"></i>Módulo: Conexão e Status do Banco de Dados</h3>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm mb-4">
+      <h5 class="fw-bold">Status da Conexão PostgreSQL</h5>
+      <hr>
+      {% if status %}
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+          <i class="bi bi-check-circle-fill fs-4 me-2"></i>
+          <div>Conexão estabelecida com sucesso via SQLAlchemy/PostgreSQL!</div>
+        </div>
+      {% else %}
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+          <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+          <div><strong>Falha na Conexão:</strong> {{ erro }}</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h5 class="fw-bold">Tabelas Identificadas no Banco</h5>
+      <hr>
+      {% if tabelas %}
+        <ul class="list-group">
+          {% for t in tabelas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ t }}
+              <span class="badge bg-primary rounded-pill">Ativa</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">Nenhuma tabela encontrada ou conexão inativa.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

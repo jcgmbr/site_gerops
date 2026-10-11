@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold">{{ 'Editar Ocorrência ID #' ~ registro.id if registro else 'Nova Ocorrência' }}</h5>
+        <a href="{{ url_for('modulo_ocorrencias') }}" class="btn btn-sm btn-outline-light">Voltar</a>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <!-- Navegação por Abas -->
+            <ul class="nav nav-tabs mb-4" id="formTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="geral-tab" data-bs-toggle="tab" data-bs-target="#geral" type="button" role="tab" aria-controls="geral" aria-selected="true">
+                        1. Dados Gerais
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="agente-tab" data-bs-toggle="tab" data-bs-target="#agente" type="button" role="tab" aria-controls="agente" aria-selected="false">
+                        2. Agente
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="testemunhas-tab" data-bs-toggle="tab" data-bs-target="#testemunhas" type="button" role="tab" aria-controls="testemunhas" aria-selected="false">
+                        3. Testemunhas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="narrativa-tab" data-bs-toggle="tab" data-bs-target="#narrativa" type="button" role="tab" aria-controls="narrativa" aria-selected="false">
+                        4. Narrativa / Extraídos
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Conteúdo das Abas -->
+            <div class="tab-content" id="formTabsContent">
+                
+                <!-- Aba 1: Dados Gerais -->
+                <div class="tab-pane fade show active" id="geral" role="tabpanel" aria-labelledby="geral-tab">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Porto</label>
+                            <input type="text" name="porto" class="form-control" value="{{ registro.porto if registro and registro.porto else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Número BO</label>
+                            <input type="text" name="numero_bo" class="form-control" value="{{ registro.numero_bo if registro and registro.numero_bo else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Tópico</label>
+                            <input type="text" name="topico" class="form-control" value="{{ registro.topico if registro and registro.topico else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Data Ocorrência</label>
+                            <input type="date" name="data_ocorrencia" class="form-control" value="{{ registro.data_ocorrencia if registro and registro.data_ocorrencia else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Hora Ocorrência</label>
+                            <input type="time" name="hora_ocorrencia" class="form-control" value="{{ registro.hora_ocorrencia if registro and registro.hora_ocorrencia else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Título da Ocorrência</label>
+                            <input type="text" name="titulo_ocorrencia" class="form-control" value="{{ registro.titulo_ocorrencia if registro and registro.titulo_ocorrencia else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Classificação Ocorrência</label>
+                            <select name="classificacao_ocorrencia" class="form-select">
+                                <option value="">-- Selecione uma Classificação --</option>
+                                {% for item in classificacoes %}
+                                    <option value="{{ item }}" 
+                                        {% if registro and registro.classificacao_ocorrencia == item %}selected{% endif %}>
+                                        {{ item }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Local Ocorrência</label>
+                            <input type="text" name="local_ocorrencia" class="form-control" value="{{ registro.local_ocorrencia if registro and registro.local_ocorrencia else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Classificação do Local</label>
+                            <input type="text" name="classificacao_local" class="form-control" value="{{ registro.classificacao_local if registro and registro.classificacao_local else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 2: Agente -->
+                <div class="tab-pane fade" id="agente" role="tabpanel" aria-labelledby="agente-tab">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Nome do Agente</label>
+                            <input type="text" name="nome_agente" class="form-control" value="{{ registro.nome_agente if registro and registro.nome_agente else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Função do Agente</label>
+                            <input type="text" name="funcao_agente" class="form-control" value="{{ registro.funcao_agente if registro and registro.funcao_agente else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Registro do Agente</label>
+                            <input type="text" name="registro_agente" class="form-control" value="{{ registro.registro_agente if registro and registro.registro_agente else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 3: Testemunhas -->
+                <div class="tab-pane fade" id="testemunhas" role="tabpanel" aria-labelledby="testemunhas-tab">
+                    <h6 class="text-primary fw-bold border-bottom pb-2">Testemunha 1</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Nome</label>
+                            <input type="text" name="testemunha1_nome" class="form-control" value="{{ registro.testemunha1_nome if registro and registro.testemunha1_nome else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">CPF</label>
+                            <input type="text" name="testemunha1_cpf" class="form-control" value="{{ registro.testemunha1_cpf if registro and registro.testemunha1_cpf else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Telefone</label>
+                            <input type="text" name="testemunha1_telefone" class="form-control" value="{{ registro.testemunha1_telefone if registro and registro.testemunha1_telefone else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Pai</label>
+                            <input type="text" name="testemunha1_pai" class="form-control" value="{{ registro.testemunha1_pai if registro and registro.testemunha1_pai else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Mãe</label>
+                            <input type="text" name="testemunha1_mae" class="form-control" value="{{ registro.testemunha1_mae if registro and registro.testemunha1_mae else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Data Nascimento</label>
+                            <input type="date" name="testemunha1_data_nascimento" class="form-control" value="{{ registro.testemunha1_data_nascimento if registro and registro.testemunha1_data_nascimento else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Residência</label>
+                            <input type="text" name="testemunha1_residencia" class="form-control" value="{{ registro.testemunha1_residencia if registro and registro.testemunha1_residencia else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" name="testemunha1_bairro" class="form-control" value="{{ registro.testemunha1_bairro if registro and registro.testemunha1_bairro else '' }}">
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary fw-bold border-bottom pb-2">Testemunha 2</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Nome</label>
+                            <input type="text" name="testemunha2_nome" class="form-control" value="{{ registro.testemunha2_nome if registro and registro.testemunha2_nome else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">CPF</label>
+                            <input type="text" name="testemunha2_cpf" class="form-control" value="{{ registro.testemunha2_cpf if registro and registro.testemunha2_cpf else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Telefone</label>
+                            <input type="text" name="testemunha2_telefone" class="form-control" value="{{ registro.testemunha2_telefone if registro and registro.testemunha2_telefone else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Pai</label>
+                            <input type="text" name="testemunha2_pai" class="form-control" value="{{ registro.testemunha2_pai if registro and registro.testemunha2_pai else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Mãe</label>
+                            <input type="text" name="testemunha2_mae" class="form-control" value="{{ registro.testemunha2_mae if registro and registro.testemunha2_mae else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Data Nascimento</label>
+                            <input type="date" name="testemunha2_data_nascimento" class="form-control" value="{{ registro.testemunha2_data_nascimento if registro and registro.testemunha2_data_nascimento else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Residência</label>
+                            <input type="text" name="testemunha2_residencia" class="form-control" value="{{ registro.testemunha2_residencia if registro and registro.testemunha2_residencia else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" name="testemunha2_bairro" class="form-control" value="{{ registro.testemunha2_bairro if registro and registro.testemunha2_bairro else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 4: Narrativa dos Fatos e Dados Extraídos -->
+                <div class="tab-pane fade" id="narrativa" role="tabpanel" aria-labelledby="narrativa-tab">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Narrativa dos Fatos</label>
+                            <textarea name="narrativa_fatos" class="form-control" rows="6">{{ registro.narrativa_fatos if registro and registro.narrativa_fatos else '' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Dados Extraídos (JSON / Texto)</label>
+                            <textarea name="dados_extraidos" class="form-control" rows="4">{{ registro.dados_extraidos if registro and registro.dados_extraidos else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                <button type="submit" class="btn btn-success fw-bold px-4">Salvar Registros</button>
+                <a href="{{ url_for('modulo_ocorrencias') }}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#formTabs button'));
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-center my-3">
+        <h2 class="fw-bold text-dark">Painel Principal</h2>
+        <p class="text-muted">Selecione um módulo abaixo para acessar a área desejada.</p>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <!-- Módulo 1: Gestão de Ocorrências -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('modulo_ocorrencias') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="text-primary mb-3">
+                        <i class="bi bi-list-task display-3"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Ocorrências</h5>
+                    <p class="card-text text-muted small">
+                        Consulte, cadastre, edite e gerencie todas as ocorrências registradas.
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Módulo 2: Base de Dados -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('modulo_banco') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="text-success mb-3">
+                        <i class="bi bi-database display-3"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Base de Dados</h5>
+                    <p class="card-text text-muted small">
+                        Verifique o status da conexão PostgreSQL e consulte as tabelas do sistema.
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Módulo 3: Estatísticas & Dashboard -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('modulo_dashboard') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="text-warning mb-3">
+                        <i class="bi bi-bar-chart-line display-3"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Estatísticas</h5>
+                    <p class="card-text text-muted small">
+                        Acompanhe gráficos, resumos mensais e exporte relatórios consolidados em PDF.
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Módulo 4: Empresas Envolvidas -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('modulo_empresas') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="text-info mb-3">
+                        <i class="bi bi-building display-3"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Empresas Envolvidas</h5>
+                    <p class="card-text text-muted small">
+                        Analise detalhadamente os registros agrupados por empresa e classificação.
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Módulo 5: Indicadores ISP -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('modulo_isp') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="text-danger mb-3">
+                        <i class="bi bi-shield-check display-3"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Indicadores ISP</h5>
+                    <p class="card-text text-muted small">
+                        Painel executivo da 50ª DP com roubos, furtos, produtividade policial e série histórica do ISP-RJ.
+                    </p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

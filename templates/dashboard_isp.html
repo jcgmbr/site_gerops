@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  @media print { .navbar { display: none; } body { background-color: #ffffff; } }
+  .isp-painel .isp-header {background-color: #0f172a; color: #ffffff;
+      padding: 18px 24px; border-radius: 8px; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;}
+  .isp-painel .header-title {font-size: 20pt; font-weight: bold;}
+  .isp-painel .header-subtitle {font-size: 10pt; color: #94a3b8; margin-top: 4px;}
+  .isp-painel .isp-badge {background-color: #1e293b; border: 1px solid #334155; color: #38bdf8;
+      padding: 6px 14px; border-radius: 20px; font-size: 9pt; font-weight: bold;}
+  .isp-painel .section-title {font-size: 13pt; font-weight: bold; color: #0f172a;
+      margin-bottom: 12px; padding-bottom: 4px; border-bottom: 2px solid #cbd5e1;}
+  .isp-painel .layout-table {width: 100%; border-collapse: separate; border-spacing: 12px; margin-left: -12px; margin-right: -12px;}
+  .isp-painel .layout-td {vertical-align: top; padding: 0;}
+  .isp-painel .kpi-card {background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;}
+  .isp-painel .kpi-card.primary {border-top: 4px solid #2563eb;}
+  .isp-painel .kpi-card.danger {border-top: 4px solid #dc2626;}
+  .isp-painel .kpi-card.warning {border-top: 4px solid #d97706;}
+  .isp-painel .kpi-card.success {border-top: 4px solid #16a34a;}
+  .isp-painel .kpi-label {font-size: 8.5pt; font-weight: bold; color: #64748b; text-transform: uppercase;}
+  .isp-painel .kpi-value {font-size: 22pt; font-weight: bold; color: #0f172a; margin: 6px 0 2px 0;}
+  .isp-painel .kpi-sub {font-size: 8pt; color: #64748b;}
+  .isp-painel .panel {background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;}
+  .isp-painel .data-table {width: 100%; border-collapse: collapse; font-size: 9.5pt;}
+  .isp-painel .data-table th {background-color: #f1f5f9; color: #475569; font-weight: bold; text-align: left; padding: 8px 10px; border-bottom: 2px solid #cbd5e1; font-size: 8.5pt; text-transform: uppercase;}
+  .isp-painel .data-table td {padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #334155;}
+  .isp-painel .data-table td.number, .data-table th.number {text-align: right; font-weight: 600;}
+  .isp-painel .highlight-row {background-color: #f8fafc; font-weight: bold;}
+  .isp-painel .bar-container {width: 100%; background-color: #f1f5f9; border-radius: 4px; height: 12px; overflow: hidden; margin-top: 4px;}
+  .isp-painel .bar-fill {height: 100%; border-radius: 4px;}
+  .isp-painel .bar-fill.red {background-color: #ef4444;}
+  .isp-painel .bar-fill.amber {background-color: #f59e0b;}
+  .isp-painel .bar-fill.green {background-color: #10b981;}
+  .isp-painel .bar-fill.blue {background-color: #3b82f6;}
+  .isp-painel .footer {margin-top: 15px; text-align: center; font-size: 8pt; color: #94a3b8;}
+</style>
+
+<div class="isp-painel">
+  {% if erro %}
+  <div class="alert alert-danger" role="alert">
+    <strong>Erro de Conexão/Processamento:</strong> {{ erro }}
+  </div>
+  {% elif m and m.ultimo_mes %}
+  <div class="isp-header">
+    <div>
+      <div class="header-title">Painel Executivo de Segurança Pública</div>
+      <div class="header-subtitle">Base Evolutiva CISP - {{ m.ultimo_mes['Delegacia'] }}ª DP ({{ m.ultimo_mes['Município'] }}) | Fonte: ISP-RJ</div>
+    </div>
+    <div>
+      <span class="isp-badge">Série Histórica: {{ m.ano_inicial }} – {{ m.ultimo_mes['Ano'] }}</span>
+    </div>
+  </div>
+
+  <div class="section-title">1. Desempenho do Último Mês Registrado (Mês {{ m.ultimo_mes['Mês'] }}/{{ m.ultimo_mes['Ano'] }})</div>
+  
+  <table class="layout-table" style="margin-bottom: 16px;">
+    <tr>
+      <td class="layout-td" style="width: 25%;">
+        <div class="kpi-card primary">
+          <div class="kpi-label">Total de Ocorrências</div>
+          <div class="kpi-value">{{ m.ultimo_mes['Total de Ocorrências'] }}</div>
+          <div class="kpi-sub">Mês de Ref: {{ m.ultimo_mes['Mês'] }}/{{ m.ultimo_mes['Ano'] }}</div>
+        </div>
+      </td>
+      <td class="layout-td" style="width: 25%;">
+        <div class="kpi-card danger">
+          <div class="kpi-label">Total de Roubos</div>
+          <div class="kpi-value">{{ m.ultimo_mes['Total de Roubos'] }}</div>
+          <div class="kpi-sub">Veículos ({{ m.ultimo_mes['Roubo de Veículo'] }}) + Carga ({{ m.ultimo_mes['Roubo de Cargas'] }})</div>
+        </div>
+      </td>
+      <td class="layout-td" style="width: 25%;">
+        <div class="kpi-card warning">
+          <div class="kpi-label">Total de Furtos</div>
+          <div class="kpi-value">{{ m.ultimo_mes['Total de Furtos'] }}</div>
+          <div class="kpi-sub">Veículos ({{ m.ultimo_mes['Furto de Veículo'] }}) + Outros ({{ m.ultimo_mes['Outros Furtos'] }})</div>
+        </div>
+      </td>
+      <td class="layout-td" style="width: 25%;">
+        <div class="kpi-card success">
+          <div class="kpi-label">Produtividade Policial</div>
+          <div class="kpi-value">{{ m.ultimo_mes['Total Produtividade Policial'] }}</div>
+          <div class="kpi-sub">Drogas ({{ m.ultimo_mes['Apreensão de Drogas'] + m.ultimo_mes['Tráfico de Drogas'] }}) + Mandados ({{ m.ultimo_mes['Mandado de Prisão'] }})</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="layout-table" style="margin-bottom: 24px;">
+    <tr>
+      <td class="layout-td" style="width: 50%;">
+        <div class="panel">
+          <div style="font-weight: bold; font-size: 10pt; margin-bottom: 10px;">
+            Detalhamento de Ocorrências - {{ m.ultimo_mes['Mês'] }}/{{ m.ultimo_mes['Ano'] }}
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Classe de Crime</th>
+                <th>Indicador</th>
+                <th class="number">Qtd</th>
+                <th class="number">% do Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Roubos</strong></td>
+                <td>Roubo de Veículo</td>
+                <td class="number">{{ m.ultimo_mes['Roubo de Veículo'] }}</td>
+                <td class="number">{{ m.perc_rv }}%</td>
+              </tr>
+              <tr>
+                <td><strong>Roubos</strong></td>
+                <td>Roubo de Carga</td>
+                <td class="number">{{ m.ultimo_mes['Roubo de Cargas'] }}</td>
+                <td class="number">{{ m.perc_rc }}%</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>Furtos</strong></td>
+                <td>Furto de Veículo</td>
+                <td class="number">{{ m.ultimo_mes['Furto de Veículo'] }}</td>
+                <td class="number">{{ m.perc_fv }}%</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>Furtos</strong></td>
+                <td>Outros Furtos</td>
+                <td class="number">{{ m.ultimo_mes['Outros Furtos'] }}</td>
+                <td class="number">{{ m.perc_of }}%</td>
+              </tr>
+              <tr>
+                <td><strong>Outros</strong></td>
+                <td>Demais Ocorrências</td>
+                <td class="number">{{ m.demais_oc }}</td>
+                <td class="number">{{ m.perc_demais }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </td>
+      <td class="layout-td" style="width: 50%;">
+        <div class="panel">
+          <div style="font-weight: bold; font-size: 10pt; margin-bottom: 10px;">
+            Proporção de Indicadores Chave no Mês
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Representação Visual</th>
+                <th class="number">Qtd</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set v_drogas = m.ultimo_mes['Apreensão de Drogas'] + m.ultimo_mes['Tráfico de Drogas'] %}
+              {% set valores_barras = [m.ultimo_mes['Outros Furtos'], m.ultimo_mes['Roubo de Veículo'], m.ultimo_mes['Furto de Veículo'], v_drogas, m.ultimo_mes['Mandado de Prisão']] %}
+              {% set max_barra = (valores_barras | max) or 1 %}
+              <tr>
+                <td>Outros Furtos</td>
+                <td><div class="bar-container"><div class="bar-fill blue" style="width: {{ ((m.ultimo_mes['Outros Furtos'] / max_barra) * 100) | round(1) }}%;"></div></div></td>
+                <td class="number">{{ m.ultimo_mes['Outros Furtos'] }}</td>
+              </tr>
+              <tr>
+                <td>Roubo de Veículo</td>
+                <td><div class="bar-container"><div class="bar-fill red" style="width: {{ ((m.ultimo_mes['Roubo de Veículo'] / max_barra) * 100) | round(1) }}%;"></div></div></td>
+                <td class="number">{{ m.ultimo_mes['Roubo de Veículo'] }}</td>
+              </tr>
+              <tr>
+                <td>Furto de Veículo</td>
+                <td><div class="bar-container"><div class="bar-fill amber" style="width: {{ ((m.ultimo_mes['Furto de Veículo'] / max_barra) * 100) | round(1) }}%;"></div></div></td>
+                <td class="number">{{ m.ultimo_mes['Furto de Veículo'] }}</td>
+              </tr>
+              <tr>
+                <td>Ações com Drogas</td>
+                <td><div class="bar-container"><div class="bar-fill green" style="width: {{ ((v_drogas / max_barra) * 100) | round(1) }}%;"></div></div></td>
+                <td class="number">{{ m.ultimo_mes['Apreensão de Drogas'] + m.ultimo_mes['Tráfico de Drogas'] }}</td>
+              </tr>
+              <tr>
+                <td>Mandados Cumpridos</td>
+                <td><div class="bar-container"><div class="bar-fill green" style="width: {{ ((m.ultimo_mes['Mandado de Prisão'] / max_barra) * 100) | round(1) }}%;"></div></div></td>
+                <td class="number">{{ m.ultimo_mes['Mandado de Prisão'] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-title">2. Acumulado da Série Histórica ({{ m.ano_inicial }} – {{ m.ultimo_mes['Ano'] }} Atualizado)</div>
+
+  <table class="layout-table">
+    <tr>
+      <td class="layout-td" style="width: 100%;">
+        <div class="panel">
+          <div style="font-weight: bold; font-size: 10pt; margin-bottom: 10px;">
+            Resumo Acumulado por Classe de Ocorrência (50ª DP - {{ m.ultimo_mes['Município'] }})
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Classe Principal</th>
+                <th>Indicadores Incluídos</th>
+                <th class="number">Média Mensal Est.</th>
+                <th class="number">Acumulado Total</th>
+                <th class="number">% do Total Geral</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color: #dc2626;">Classe Roubos</strong></td>
+                <td>Roubo de Veículo + Roubo de Carga</td>
+                <td class="number">{{ m.acumulado.media_roubos }}</td>
+                <td class="number">{{ "{:,}".format(m.acumulado.ac_roubos).replace(",", ".") }}</td>
+                <td class="number">{{ m.acumulado.perc_ac_roubos }}%</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong style="color: #d97706;">Classe Furtos</strong></td>
+                <td>Furto de Veículo + Outros Furtos</td>
+                <td class="number">{{ m.acumulado.media_furtos }}</td>
+                <td class="number">{{ "{:,}".format(m.acumulado.ac_furtos).replace(",", ".") }}</td>
+                <td class="number">{{ m.acumulado.perc_ac_furtos }}%</td>
+              </tr>
+              <tr>
+                <td><strong style="color: #16a34a;">Produtividade Policial</strong></td>
+                <td>Apreensão + Tráfico + Mandados Cumpridos (CMP)</td>
+                <td class="number">{{ m.acumulado.media_prod }}</td>
+                <td class="number">{{ "{:,}".format(m.acumulado.ac_prod).replace(",", ".") }}</td>
+                <td class="number">{{ m.acumulado.perc_ac_prod }}%</td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>Demais Registros</strong></td>
+                <td>Outros Registros de Ocorrência</td>
+                <td class="number">{{ m.acumulado.media_demais }}</td>
+                <td class="number">{{ "{:,}".format(m.acumulado.ac_demais).replace(",", ".") }}</td>
+                <td class="number">{{ m.acumulado.perc_ac_demais }}%</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold;">
+                <td style="color: #ffffff;">TOTAL ACUMULADO</td>
+                <td style="color: #94a3b8;">Período {{ m.ano_inicial }}-{{ m.ultimo_mes['Ano'] }} ({{ m.acumulado.tot_meses }} meses)</td>
+                <td class="number" style="color: #ffffff;">{{ m.acumulado.media_total }}</td>
+                <td class="number" style="color: #ffffff;">{{ "{:,}".format(m.acumulado.tot_ac).replace(",", ".") }}</td>
+                <td class="number" style="color: #ffffff;">100.0%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    Relatório gerado dinamicamente via Flask + PostgreSQL (Base `gerops.base_dp_evolucao_mensal_cisp`).
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
