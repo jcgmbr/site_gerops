@@ -87,24 +87,28 @@
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
-                <i class="bi bi-shield-lock-fill me-2"></i>GEPO - Sistema de Ocorrências
+                <i class="bi bi-shield-lock-fill me-2"></i>GEROPS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                {% if session.get('user_id') %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('index') }}"><i class="bi bi-house-door me-1"></i>Início</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('modulo_ocorrencias') }}"><i class="bi bi-list-task me-1"></i>Ocorrências</a>
+                        <a class="nav-link" href="{{ url_for('modulo_ocorrencias') }}"><i class="bi bi-list-task me-1"></i>B.O.</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('roip_index') }}"><i class="bi bi-journal-text me-1"></i>ROIP</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('modulo_banco') }}"><i class="bi bi-database me-1"></i>Base de Dados</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('modulo_dashboard') }}"><i class="bi bi-bar-chart-line me-1"></i>Estatísticas & Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('modulo_dashboard') }}"><i class="bi bi-bar-chart-line me-1"></i>Dashboard B.O.</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('modulo_empresas') }}"><i class="bi bi-building me-1"></i>Empresas Envolvidas</a>
@@ -113,6 +117,11 @@
                         <a class="nav-link" href="{{ url_for('modulo_isp') }}"><i class="bi bi-shield-check me-1"></i>Indicadores ISP</a>
                     </li>
                 </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-light me-3 small"><i class="bi bi-person-circle me-1"></i>{{ session.get('user_name') }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -122,7 +131,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category if category != 'message' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+              <div class="alert alert-{{ 'danger' if category == 'danger' else ('success' if category == 'success' else 'info') }} alert-dismissible fade show mb-4" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>

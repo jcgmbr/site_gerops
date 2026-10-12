@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold">Registros ROIP</h3>
+    <div>
+        <a href="{{ url_for('roip_criar') }}" class="btn btn-primary fw-bold me-2">+ Nova Ocorrência ROIP</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Voltar ao Início</a>
+    </div>
+</div>
+
+<!-- Caixa de Seleção / Filtro por Razão Social -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body bg-white py-3">
+        <form method="GET" action="{{ url_for('roip_index') }}" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="razao_social" class="col-form-label fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i> Filtrar por Razão Social:</label>
+            </div>
+            <div class="col-md-7 col-lg-5">
+                <select name="razao_social" id="razao_social" class="form-select" onchange="this.form.submit()">
+                    <option value="TODAS" {{ 'selected' if razao_atual == 'TODAS' else '' }}>TODAS AS RAZÕES SOCIAIS</option>
+                    {% for razao in razoes_sociais %}
+                        <option value="{{ razao }}" {{ 'selected' if razao_atual == razao else '' }}>{{ razao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nº ROIP</th>
+                        <th>Razão Social</th>
+                        <th>Tipo de Ocorrência</th>
+                        <th>Local</th>
+                        <th>Data Fechamento</th>
+                        <th>Responsável SSP</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in registros %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ item.instalacao_roip_numero or 'N/A' }}</span></td>
+                        <td>{{ item.instalacao_razao_social or '-' }}</td>
+                        <td><span class="badge bg-info text-dark">{{ item.ocorrencia_tipo_descricao or '-' }}</span></td>
+                        <td>{{ item.ocorrencia_local_descricao or '-' }}</td>
+                        <td>{{ item.fechamento_data or '-' }}</td>
+                        <td>{{ item.fechamento_ssp_nome or '-' }}</td>
+                        <td class="text-center">
+                            <a href="{{ url_for('roip_editar', id=item.id) }}" class="btn btn-sm btn-outline-warning me-1">Editar</a>
+                            <form action="{{ url_for('roip_excluir', id=item.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir este registro ROIP?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">Nenhum registro ROIP cadastrado para a razão social selecionada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

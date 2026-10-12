@@ -3,25 +3,26 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, flash, redirect, render_template, request, send_file, url_for
+from functools import wraps
+from flask import Flask, flash, redirect, render_template, request, send_file, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine, text
 
 import conexao.conexao_db as db
 import estatistica_bo_final as ebo
 
 app = Flask(__name__)
-app.secret_key = "chave_secreta_para_sessoes"
+app.secret_key = "chave_secreta_super_segura_para_sessoes_trocar_em_producao"
 logging.basicConfig(level=logging.INFO)
 
 _engine_base = db.conexao_bd_postgres().engine
 
-# Engine com reconexão automática: evita o erro "server closed the connection unexpectedly"
-# quando a aplicação fica muito tempo sem acesso e o servidor/rede derruba conexões ociosas.
+# Engine com reconexão automática
 engine = create_engine(
     _engine_base.url,
-    pool_pre_ping=True,   # testa a conexão antes de usá-la e reabre se estiver quebrada
-    pool_recycle=1800,    # renova conexões com mais de 30 minutos
-    connect_args={        # keepalive TCP para impedir que a conexão ociosa seja derrubada
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    connect_args={
         "keepalives": 1,
         "keepalives_idle": 60,
         "keepalives_interval": 10,
@@ -30,7 +31,7 @@ engine = create_engine(
 )
 _engine_base.dispose()
 
-COLUNAS = [
+COLUNAS_BO = [
     'porto',
     'numero_bo',
     'topico',
@@ -63,23 +64,59 @@ COLUNAS = [
     'dados_extraidos',
 ]
 
+COLUNAS_ROIP = [
+    "instalacao_roip_numero",
+    "instalacao_razao_social",
+    "instalacao_cnpj",
+    "instalacao_endereco",
+    "instalacao_municipio",
+    "instalacao_uf",
+    "instalacao_dentro_porto_organizado",
+    "instalacao_nome_porto",
+    "embarcacao_nome",
+    "embarcacao_bandeira",
+    "embarcacao_imo",
+    "embarcacao_tipo",
+    "embarcacao_ultimo_porto",
+    "embarcacao_pais",
+    "embarcacao_proximo_porto",
+    "embarcacao_oficial_protecao",
+    "embarcacao_comandante",
+    "ocorrencia_local_descricao",
+    "ocorrencia_tipo_descricao",
+    "ocorrencia_identificacao_pessoas",
+    "ocorrencia_identificacao_veiculos",
+    "ocorrencia_narrativa",
+    "fechamento_municipio",
+    "fechamento_uf",
+    "fechamento_data",
+    "fechamento_horario",
+    "fechamento_ssp_nome",
+    "fechamento_ssp_cpf",
+]
+
+
+# --- DECORADOR DE SEGURANÇA PARA AUTENTICAÇÃO ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Por favor, faça login para acessar esta página.", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 def tratar_json_postgresql(campo_raw):
-    """Converte strings no formato de dicionário Python ('key': 'val') ou texto puro
-    para uma sintaxe JSON válida no PostgreSQL ("key": "val").
-    """
     if not campo_raw or not str(campo_raw).strip():
         return None
-
     campo_str = str(campo_raw).strip()
-
     try:
         dict_obj = ast.literal_eval(campo_str)
         if isinstance(dict_obj, dict):
             return json.dumps(dict_obj, ensure_ascii=False)
     except Exception:
         pass
-
     try:
         json_obj = json.loads(campo_str)
         return json.dumps(json_obj, ensure_ascii=False)
@@ -88,10 +125,6 @@ def tratar_json_postgresql(campo_raw):
 
 
 def verificar_coerencia_ano(numero_bo, data_ocorrencia):
-    """Compara o ano do número do BO (ex.: '19/2026') com o ano da data da ocorrência.
-    Retorna uma mensagem de aviso se forem diferentes; caso contrário, retorna None.
-    É apenas um alerta: o registro continua sendo salvo normalmente.
-    """
     try:
         ano_bo = str(numero_bo).strip().split("/")[-1]
         ano_data = str(data_ocorrencia).strip()[:4]
@@ -106,10 +139,6 @@ def verificar_coerencia_ano(numero_bo, data_ocorrencia):
 
 
 def buscar_inconsistencias_ano(porto=None):
-    """Retorna os registros cujo ano da data_ocorrencia difere do ano do numero_bo.
-    Se um porto for informado e for diferente de 'TODOS', filtra apenas por aquele porto.
-    Útil para detectar erros de leitura/digitação (ex.: BO 19/2026 com data em 2025).
-    """
     condicao_porto = ""
     params = {}
     if porto and porto != "TODOS":
@@ -134,9 +163,6 @@ def buscar_inconsistencias_ano(porto=None):
 
 
 def obter_classificacoes_unicas(porto=None):
-    """Busca as classificações distintas existentes no banco de dados.
-    Se um porto for informado e for diferente de 'TODOS', filtra apenas por aquele porto.
-    """
     with engine.connect() as conn:
         if porto and porto != "TODOS":
             query = text("""
@@ -161,7 +187,6 @@ def obter_classificacoes_unicas(porto=None):
 
 
 def obter_portos_unicos_db():
-    """Busca a lista de portos únicos cadastrados na tabela do banco de dados."""
     with engine.connect() as conn:
         query = text("""
             SELECT DISTINCT UPPER(TRIM(porto)) 
@@ -172,25 +197,86 @@ def obter_portos_unicos_db():
         return conn.execute(query).scalars().all()
 
 
-# --- MENU INICIAL ---
+def obter_razoes_sociais_roip_unicas():
+    """Busca as razões sociais distintas cadastradas na tabela de ROIP de Itaguaí."""
+    with engine.connect() as conn:
+        query = text("""
+            SELECT DISTINCT TRIM(instalacao_razao_social) 
+            FROM gerops.roip_registros_itaguai 
+            WHERE instalacao_razao_social IS NOT NULL 
+              AND TRIM(instalacao_razao_social) != ''
+            ORDER BY 1 ASC
+        """)
+        return conn.execute(query).scalars().all()
+
+
+def extrair_dados_form_roip(form):
+    dados = {}
+    for col in COLUNAS_ROIP:
+        val = form.get(col)
+        if col == "instalacao_dentro_porto_organizado":
+            dados[col] = str(val).lower() in ["true", "1", "on", "sim"]
+        else:
+            dados[col] = val.strip() if val and val.strip() else None
+    return dados
+
+
+# --- ROTAS DE AUTENTICAÇÃO ---
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+
+        if not email or not senha:
+            flash("Preencha todos os campos de login.", "danger")
+            return render_template("login.html")
+
+        with engine.connect() as conn:
+            query = text("SELECT id, nome, email, senha_hash, ativo FROM gerops.usuarios WHERE email = :email")
+            usuario = conn.execute(query, {"email": email}).mappings().first()
+
+        if usuario and usuario["ativo"] and check_password_hash(usuario["senha_hash"], senha):
+            session.clear()
+            session.permanent = True
+            session["user_id"] = usuario["id"]
+            session["user_name"] = usuario["nome"]
+            session["user_email"] = usuario["email"]
+            flash(f"Bem-vindo(a), {usuario['nome']}!", "success")
+            return redirect(url_for("index"))
+        else:
+            flash("E-mail ou senha incorretos, ou conta desativada.", "danger")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Sessão encerrada com segurança.", "info")
+    return redirect(url_for("login"))
+
+
+# --- MENU INICIAL (Protegido) ---
 
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html")
 
 
-# --- MÓDULO DE GESTÃO DE OCORRÊNCIAS (CRUD) ---
+# --- MÓDULO DE GESTÃO DE OCORRÊNCIAS (CRUD BO) ---
 
 @app.route("/ocorrencias")
+@login_required
 def modulo_ocorrencias():
     portos = obter_portos_unicos_db()
     porto_selecionado = request.args.get("porto", "TODOS").upper()
     classificacao_selecionada = request.args.get("classificacao", "TODAS")
 
-    # Obtém as classificações disponíveis (filtradas pelo porto se aplicável)
     classificacoes = obter_classificacoes_unicas(porto_selecionado)
 
-    # Montagem da consulta dinâmica
     condicoes = []
     params = {}
 
@@ -227,15 +313,16 @@ def modulo_ocorrencias():
 
 
 @app.route("/novo", methods=["GET", "POST"])
+@login_required
 def criar():
     if request.method == "POST":
-        dados = {col: request.form.get(col) or None for col in COLUNAS}
+        dados = {col: request.form.get(col) or None for col in COLUNAS_BO}
         dados["dados_extraidos"] = tratar_json_postgresql(
             dados.get("dados_extraidos")
         )
 
-        colunas_sql = ", ".join(COLUNAS)
-        params_sql = ", ".join([f":{col}" for col in COLUNAS])
+        colunas_sql = ", ".join(COLUNAS_BO)
+        params_sql = ", ".join([f":{col}" for col in COLUNAS_BO])
 
         with engine.begin() as conn:
             query = text(f"""
@@ -255,15 +342,16 @@ def criar():
 
 
 @app.route("/editar/<int:id>", methods=["GET", "POST"])
+@login_required
 def editar(id):
     if request.method == "POST":
-        dados = {col: request.form.get(col) or None for col in COLUNAS}
+        dados = {col: request.form.get(col) or None for col in COLUNAS_BO}
         dados["dados_extraidos"] = tratar_json_postgresql(
             dados.get("dados_extraidos")
         )
         dados["id"] = id
 
-        set_sql = ", ".join([f"{col} = :{col}" for col in COLUNAS])
+        set_sql = ", ".join([f"{col} = :{col}" for col in COLUNAS_BO])
 
         with engine.begin() as conn:
             query = text(f"""
@@ -288,6 +376,7 @@ def editar(id):
 
 
 @app.route("/excluir/<int:id>", methods=["POST"])
+@login_required
 def excluir(id):
     with engine.begin() as conn:
         query = text("DELETE FROM gerops.registro_ocorrencias WHERE id = :id")
@@ -296,9 +385,105 @@ def excluir(id):
     return redirect(url_for("modulo_ocorrencias"))
 
 
+# --- MÓDULO NOVO: GESTÃO DE ROIP (Itaguaí) ---
+
+@app.route("/roip")
+@login_required
+def roip_index():
+    razoes_sociais = obter_razoes_sociais_roip_unicas()
+    razao_selecionada = request.args.get("razao_social", "TODAS")
+
+    condicoes = []
+    params = {}
+
+    if razao_selecionada and razao_selecionada != "TODAS":
+        condicoes.append("TRIM(instalacao_razao_social) = :razao_social")
+        params["razao_social"] = razao_selecionada
+
+    where_clause = f"WHERE {' AND '.join(condicoes)}" if condicoes else ""
+
+    with engine.connect() as conn:
+        query = text(f"""
+            SELECT id, instalacao_roip_numero, instalacao_razao_social, 
+                   ocorrencia_tipo_descricao, ocorrencia_local_descricao, 
+                   fechamento_data, fechamento_ssp_nome 
+            FROM gerops.roip_registros_itaguai 
+            {where_clause}
+            ORDER BY id ASC
+        """)
+        registros = conn.execute(query, params).mappings().all()
+
+    return render_template(
+        "roip_index.html", 
+        registros=registros, 
+        razoes_sociais=razoes_sociais, 
+        razao_atual=razao_selecionada
+    )
+
+
+@app.route("/roip/novo", methods=["GET", "POST"])
+@login_required
+def roip_criar():
+    if request.method == "POST":
+        dados = extrair_dados_form_roip(request.form)
+
+        colunas_sql = ", ".join(COLUNAS_ROIP)
+        params_sql = ", ".join([f":{col}" for col in COLUNAS_ROIP])
+
+        with engine.begin() as conn:
+            query = text(f"""
+                INSERT INTO gerops.roip_registros_itaguai ({colunas_sql})
+                VALUES ({params_sql})
+            """)
+            conn.execute(query, dados)
+
+        flash("Ocorrência ROIP cadastrada com sucesso!", "success")
+        return redirect(url_for("roip_index"))
+
+    return render_template("form_roip.html", registro=None)
+
+
+@app.route("/roip/editar/<int:id>", methods=["GET", "POST"])
+@login_required
+def roip_editar(id):
+    if request.method == "POST":
+        dados = extrair_dados_form_roip(request.form)
+        dados["id"] = id
+
+        set_sql = ", ".join([f"{col} = :{col}" for col in COLUNAS_ROIP])
+
+        with engine.begin() as conn:
+            query = text(f"""
+                UPDATE gerops.roip_registros_itaguai
+                SET {set_sql}
+                WHERE id = :id
+            """)
+            conn.execute(query, dados)
+
+        flash("Registro ROIP atualizado com sucesso!", "success")
+        return redirect(url_for("roip_index"))
+
+    with engine.connect() as conn:
+        query = text("SELECT * FROM gerops.roip_registros_itaguai WHERE id = :id")
+        registro = conn.execute(query, {"id": id}).mappings().first()
+
+    return render_template("form_roip.html", registro=registro)
+
+
+@app.route("/roip/excluir/<int:id>", methods=["POST"])
+@login_required
+def roip_excluir(id):
+    with engine.begin() as conn:
+        query = text("DELETE FROM gerops.roip_registros_itaguai WHERE id = :id")
+        conn.execute(query, {"id": id})
+    flash("Registro ROIP excluído com sucesso!", "success")
+    return redirect(url_for("roip_index"))
+
+
 # --- MÓDULO 1: BANCO DE DADOS E CONEXÃO ---
 
 @app.route("/banco")
+@login_required
 def modulo_banco():
     status_conexao = False
     erro_mensagem = None
@@ -318,18 +503,16 @@ def modulo_banco():
 # --- MÓDULO 2: ESTATÍSTICA E DASHBOARD DE BOs ---
 
 @app.route("/dashboard")
+@login_required
 def modulo_dashboard():
     try:
         df_bruto = ebo.carregar_dados()
         df_completo = ebo.tratar_dados(df_bruto)
 
-        # 1. Lista de portos disponíveis
         portos_unicos = ebo.obter_portos_unicos(df_completo)
         porto_default = "RIO DE JANEIRO" if "RIO DE JANEIRO" in portos_unicos else (portos_unicos[0] if portos_unicos else "RIO DE JANEIRO")
         porto_selecionado = request.args.get("porto", porto_default).upper()
 
-        # 2. Filtrar o DataFrame estritamente pelo porto selecionado.
-        # Normaliza novamente o valor para evitar diferenças de espaços/maiúsculas.
         if "_porto" in df_completo.columns:
             df_porto = df_completo[
                 df_completo["_porto"].fillna("").astype(str).str.strip().str.upper()
@@ -338,21 +521,14 @@ def modulo_dashboard():
         else:
             df_porto = df_completo.copy()
 
-        # 3. Determinar SOMENTE os períodos que possuem registros reais
-        # dentro do DataFrame já filtrado pelo porto.
         periodos = ebo.determinar_periodos(df_porto)
         periodos_str = [p.strftime("%Y-%m") for p in periodos]
 
-        # 4. Validar se o período solicitado existe para o porto selecionado
         periodo_solicitado = request.args.get("periodo")
 
-        # Aceita o período solicitado somente se ele estiver entre os
-        # períodos realmente existentes para o porto selecionado.
         if periodo_solicitado in periodos_str:
             periodo_selecionado = periodo_solicitado
         elif periodos_str:
-            # Quando o porto muda, um período antigo pode permanecer na URL.
-            # Nesse caso, usa o último período REAL disponível para o novo porto.
             periodo_selecionado = periodos_str[-1]
         else:
             periodo_selecionado = "Sem Registros"
@@ -399,6 +575,7 @@ def modulo_dashboard():
 
 
 @app.route("/empresas")
+@login_required
 def modulo_empresas():
     try:
         df_bruto = ebo.carregar_dados()
@@ -420,6 +597,7 @@ def modulo_empresas():
 
 
 @app.route("/download-pdf")
+@login_required
 def download_pdf():
     porto_selecionado = request.args.get("porto", "RIO DE JANEIRO").upper()
     try:
@@ -458,12 +636,11 @@ def download_pdf():
 
 # --- MÓDULO 3: INDICADORES ISP (BASE EVOLUTIVA CISP) ---
 
-CISP_ISP = 50           # Delegacia analisada (50ª DP)
-ANO_INICIAL_ISP = 2016  # Início da série histórica
+CISP_ISP = 50
+ANO_INICIAL_ISP = 2016
 
 
 def _para_int(valor):
-    """Converte valores numéricos do banco (Decimal/float/None) para int."""
     try:
         return int(valor or 0)
     except (TypeError, ValueError):
@@ -471,7 +648,6 @@ def _para_int(valor):
 
 
 def executar_consulta_isp():
-    """Consulta o último mês registrado e o acumulado da série histórica da CISP."""
     sql_ultimo_mes = text("""
         SELECT
             cisp AS "Delegacia",
@@ -514,7 +690,6 @@ def executar_consulta_isp():
     ultimo_mes = dict(res_ultimo) if res_ultimo else None
     acumulado = dict(res_acumulado) if res_acumulado else None
 
-    # Garante números inteiros (evita "5.0" ou Decimal na formatação do template)
     if ultimo_mes:
         for chave, valor in ultimo_mes.items():
             if chave != "Município":
@@ -526,6 +701,7 @@ def executar_consulta_isp():
 
 
 @app.route("/isp")
+@login_required
 def modulo_isp():
     try:
         ultimo_mes, acumulado = executar_consulta_isp()

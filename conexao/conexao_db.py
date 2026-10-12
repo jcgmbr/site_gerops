@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
+import os
 
+load_dotenv()
 
 class conexao_bd_mysql:
     def __init__(self):
@@ -12,12 +15,12 @@ class conexao_bd_mysql:
 
 class conexao_bd_postgres:
     def __init__(self):
-        self.user = "postgres"
-        self.senha = "87338cb097b3e2202bd7"
-        self.banco_de_dados = "base_supgua" #importante especificar o banco
-        self.host = "cqmlhi.easypanel.host"
-        self.porta = 5432
-        self.schema = "gerops"
+        self.user = os.getenv("DB_USER")
+        self.senha = os.getenv("DB_PASSWORD")
+        self.banco_de_dados = os.getenv("DB_NAME") #importante especificar o banco
+        self.host = os.getenv("DB_HOST")
+        self.porta = os.getenv("DB_PORT")
+        self.schema = os.getenv("DB_SCHEMA")
         self.engine = create_engine(url=f"postgresql+psycopg2://{self.user}:{self.senha}@{self.host}:{self.porta}/{self.banco_de_dados}",
             connect_args={
                 "options": f"-csearch_path={self.schema}"

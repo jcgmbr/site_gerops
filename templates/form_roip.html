@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 fw-bold">{{ 'Editar ROIP ID #' ~ registro.id if registro else 'Nova Ocorrência ROIP' }}</h5>
+        <a href="{{ url_for('roip_index') }}" class="btn btn-sm btn-outline-light">Voltar</a>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <!-- Navegação por Abas -->
+            <ul class="nav nav-tabs mb-4" id="roipTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="instalacao-tab" data-bs-toggle="tab" data-bs-target="#instalacao" type="button" role="tab">
+                        1. Instalação
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="embarcacao-tab" data-bs-toggle="tab" data-bs-target="#embarcacao" type="button" role="tab">
+                        2. Embarcação
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="ocorrencia-tab" data-bs-toggle="tab" data-bs-target="#ocorrencia" type="button" role="tab">
+                        3. Ocorrência
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="fechamento-tab" data-bs-toggle="tab" data-bs-target="#fechamento" type="button" role="tab">
+                        4. Fechamento
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Conteúdo das Abas -->
+            <div class="tab-content" id="roipTabsContent">
+                
+                <!-- Aba 1: Instalação -->
+                <div class="tab-pane fade show active" id="instalacao" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Número ROIP</label>
+                            <input type="text" name="instalacao_roip_numero" class="form-control" value="{{ registro.instalacao_roip_numero if registro and registro.instalacao_roip_numero else '' }}">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">Razão Social</label>
+                            <input type="text" name="instalacao_razao_social" class="form-control" value="{{ registro.instalacao_razao_social if registro and registro.instalacao_razao_social else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">CNPJ</label>
+                            <input type="text" name="instalacao_cnpj" class="form-control" value="{{ registro.instalacao_cnpj if registro and registro.instalacao_cnpj else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Endereço</label>
+                            <input type="text" name="instalacao_endereco" class="form-control" value="{{ registro.instalacao_endereco if registro and registro.instalacao_endereco else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Município</label>
+                            <input type="text" name="instalacao_municipio" class="form-control" value="{{ registro.instalacao_municipio if registro and registro.instalacao_municipio else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">UF</label>
+                            <input type="text" name="instalacao_uf" class="form-control" value="{{ registro.instalacao_uf if registro and registro.instalacao_uf else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Dentro de Porto Organizado?</label>
+                            <select name="instalacao_dentro_porto_organizado" class="form-select">
+                                <option value="True" {{ 'selected' if registro and registro.instalacao_dentro_porto_organizado else '' }}>Sim</option>
+                                <option value="False" {{ 'selected' if registro and not registro.instalacao_dentro_porto_organizado else '' }}>Não</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nome do Porto</label>
+                            <input type="text" name="instalacao_nome_porto" class="form-control" value="{{ registro.instalacao_nome_porto if registro and registro.instalacao_nome_porto else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 2: Embarcação -->
+                <div class="tab-pane fade" id="embarcacao" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Nome da Embarcação</label>
+                            <input type="text" name="embarcacao_nome" class="form-control" value="{{ registro.embarcacao_nome if registro and registro.embarcacao_nome else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Bandeira</label>
+                            <input type="text" name="embarcacao_bandeira" class="form-control" value="{{ registro.embarcacao_bandeira if registro and registro.embarcacao_bandeira else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Número IMO</label>
+                            <input type="text" name="embarcacao_imo" class="form-control" value="{{ registro.embarcacao_imo if registro and registro.embarcacao_imo else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Tipo</label>
+                            <input type="text" name="embarcacao_tipo" class="form-control" value="{{ registro.embarcacao_tipo if registro and registro.embarcacao_tipo else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Último Porto</label>
+                            <input type="text" name="embarcacao_ultimo_porto" class="form-control" value="{{ registro.embarcacao_ultimo_porto if registro and registro.embarcacao_ultimo_porto else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">País</label>
+                            <input type="text" name="embarcacao_pais" class="form-control" value="{{ registro.embarcacao_pais if registro and registro.embarcacao_pais else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Próximo Porto</label>
+                            <input type="text" name="embarcacao_proximo_porto" class="form-control" value="{{ registro.embarcacao_proximo_porto if registro and registro.embarcacao_proximo_porto else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Oficial de Proteção</label>
+                            <input type="text" name="embarcacao_oficial_protecao" class="form-control" value="{{ registro.embarcacao_oficial_protecao if registro and registro.embarcacao_oficial_protecao else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Comandante</label>
+                            <input type="text" name="embarcacao_comandante" class="form-control" value="{{ registro.embarcacao_comandante if registro and registro.embarcacao_comandante else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 3: Ocorrência -->
+                <div class="tab-pane fade" id="ocorrencia" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Descrição do Local</label>
+                            <input type="text" name="ocorrencia_local_descricao" class="form-control" value="{{ registro.ocorrencia_local_descricao if registro and registro.ocorrencia_local_descricao else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo da Ocorrência</label>
+                            <input type="text" name="ocorrencia_tipo_descricao" class="form-control" value="{{ registro.ocorrencia_tipo_descricao if registro and registro.ocorrencia_tipo_descricao else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Identificação de Pessoas</label>
+                            <input type="text" name="ocorrencia_identificacao_pessoas" class="form-control" value="{{ registro.ocorrencia_identificacao_pessoas if registro and registro.ocorrencia_identificacao_pessoas else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Identificação de Veículos</label>
+                            <input type="text" name="ocorrencia_identificacao_veiculos" class="form-control" value="{{ registro.ocorrencia_identificacao_veiculos if registro and registro.ocorrencia_identificacao_veiculos else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Narrativa dos Fatos</label>
+                            <textarea name="ocorrencia_narrativa" class="form-control" rows="6">{{ registro.ocorrencia_narrativa if registro and registro.ocorrencia_narrativa else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba 4: Fechamento -->
+                <div class="tab-pane fade" id="fechamento" role="tabpanel">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Município de Fechamento</label>
+                            <input type="text" name="fechamento_municipio" class="form-control" value="{{ registro.fechamento_municipio if registro and registro.fechamento_municipio else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold">UF</label>
+                            <input type="text" name="fechamento_uf" class="form-control" value="{{ registro.fechamento_uf if registro and registro.fechamento_uf else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Data de Fechamento</label>
+                            <input type="date" name="fechamento_data" class="form-control" value="{{ registro.fechamento_data if registro and registro.fechamento_data else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Horário de Fechamento</label>
+                            <input type="time" name="fechamento_horario" class="form-control" value="{{ registro.fechamento_horario if registro and registro.fechamento_horario else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nome do Responsável (SSP)</label>
+                            <input type="text" name="fechamento_ssp_nome" class="form-control" value="{{ registro.fechamento_ssp_nome if registro and registro.fechamento_ssp_nome else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">CPF do Responsável (SSP)</label>
+                            <input type="text" name="fechamento_ssp_cpf" class="form-control" value="{{ registro.fechamento_ssp_cpf if registro and registro.fechamento_ssp_cpf else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                <button type="submit" class="btn btn-success fw-bold px-4">Salvar Ocorrência ROIP</button>
+                <a href="{{ url_for('roip_index') }}" class="btn btn-secondary px-4">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#roipTabs button'));
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+    });
+</script>
+{% endblock %}
