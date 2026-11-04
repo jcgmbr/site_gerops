@@ -295,7 +295,7 @@ def modulo_ocorrencias():
             SELECT id, porto, numero_bo, data_ocorrencia, titulo_ocorrencia, local_ocorrencia, classificacao_ocorrencia 
             FROM gerops.registro_ocorrencias 
             {where_clause}
-            ORDER BY id ASC
+            ORDER BY CAST(SPLIT_PART(numero_bo, '/', 1) AS INTEGER)
         """)
         registros = conn.execute(query, params).mappings().all()
 
